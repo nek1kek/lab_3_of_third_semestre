@@ -1,0 +1,17 @@
+7 9
+1 NoneInfo
+2 NoneInfo
+3 NoneInfo
+4 NoneInfo
+5 NoneInfo
+6 NoneInfo
+7 NoneInfo
+2 1 5 NoneInfo
+1 3 2 NoneInfo
+3 2 2 NoneInfo
+1 4 1 NoneInfo
+4 1 2 NoneInfo
+2 7 2 NoneInfo
+3 6 3 NoneInfo
+4 6 100 NoneInfo
+6 7 1 NoneInfo

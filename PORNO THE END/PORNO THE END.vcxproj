@@ -23,12 +23,21 @@
     <ClInclude Include="exception.h" />
     <ClInclude Include="Graph.h" />
     <ClInclude Include="menu.h" />
+    <ClInclude Include="tests.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="g.dot" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="tests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="preset1.txt" />
+    <Text Include="preset2.txt" />
+    <Text Include="preset_bipartite.txt" />
+    <Text Include="preset_cycle.txt" />
+    <Text Include="preset_unconnective.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

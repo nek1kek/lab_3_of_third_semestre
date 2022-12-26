@@ -76,6 +76,12 @@ namespace graph_ns {
 		void set_color(size_t color) noexcept {
 			this->color = color;
 		}
+		bool operator==(const node& other) const {
+			return this->id == other.id && other.info == this->info;
+		}
+		bool operator!=(const node& other) const {
+			return !(this->id == other.id && other.info == this->info);
+		}
 	};
 
 
@@ -138,40 +144,8 @@ namespace graph_ns {
 			}
 			return true;
 		}
+
 	};
-
-
-
-
-
-	/*
-	template<typename T>
-	struct max_value {
-		static T get() noexcept {
-			return INT32_MAX / 3;
-		}
-	};
-	template<>
-	struct max_value<long long> {
-		static long long get() noexcept {
-			return INT64_MAX / 3;
-		}
-	};
-	template<>
-	struct max_value<short int> {
-		static short int get() noexcept {
-			return INT8_MAX / 3;
-		}
-	};
-	template<>
-	struct max_value<double> {
-		static double get() noexcept {
-			return INT64_MAX / 3;
-		}
-	};возможно удалить
-	*/
-
-
 
 
 	template<typename EdgeInfo, typename WType>
@@ -192,7 +166,9 @@ namespace graph_ns {
 			return chain;
 		}
 		void push_back(const edge<EdgeInfo, WType>& ed) {
-			if (chain.size() == 0 || (*chain.end()).get_to() == ed.get_from()) {//если равен конец цепочки с началом нового ребра
+			typename std::list<edge<EdgeInfo, WType>>::iterator it = chain.end();
+			if (chain.size() > 0) it--;
+			if (chain.size() == 0 || (*it).get_to() == ed.get_from()) {
 				chain.push_back(ed);
 				count++;
 				len += ed.get_weight();
@@ -221,6 +197,13 @@ namespace graph_ns {
 				}
 			} else throw SetException(IncorrectPath);
 		}
+		bool operator==(const path& other) const {
+			return this->chain == other.chain;
+		}
+
+		bool operator!=(const path& other) const {
+			return !(this->chain == other.chain);
+		}
 	};
 
 
@@ -233,13 +216,8 @@ namespace graph_ns {
 		using node = node<NodeInfo>;
 		using edge = edge<EdgeInfo, WType>;
 		using path = path<EdgeInfo, WType>;
-
-	protected:
-		size_t weight_edges = 0;//взвешанных вершин скок
-		std::unordered_map<size_t, std::list<edge>> incidences_list;//список соедененных вершин графа, матрица инцидентности
-		std::unordered_map<size_t, node> nodes;//все вершины пронумерованные
 		struct less_x {
-			constexpr bool operator()(const edge& first, const edge& second) const noexcept {
+			bool operator()(const edge& first, const edge& second) const noexcept {
 				if (first.get_weight() == second.get_weight()) {
 					if (first.get_from() == second.get_from()) {
 						return first.get_to() < second.get_to();
@@ -249,8 +227,12 @@ namespace graph_ns {
 				return first.get_weight() < second.get_weight();
 			}
 		};
-
-		std::set<edge, less_x> edges;//множество ребер
+	protected:
+		size_t weight_edges = 0;//взвешанных вершин скок
+		//size_t-idшник вершины, в первом по номеру лежит id-вершина
+		std::unordered_map<size_t, node> nodes;//все вершины пронумерованные
+		std::unordered_map<size_t, std::list<edge>> incidences_list;//список ребер, которые имеет вершина по номером size_t, матрица инцидентности
+		std::set<edge, less_x> edges;//множество оно отсортиванный, по less_x(по весам ребер) ребер 
 
 		void print_node(std::ofstream& ofs, const node& nd) const noexcept {
 			ofs << nd.get_id();
@@ -359,9 +341,14 @@ namespace graph_ns {
 		bool isWeight() const noexcept {
 			return weight_edges != 0;
 		}
+		std::set<edge, less_x> get_edges() const noexcept {
+			return edges;
+		}
+		std::unordered_map<size_t, node> get_nodes() const noexcept {
+			return nodes;
+		}
 
-		//от сюда рассмотреть+меню понять
-
+		//файл
 		void write_fstream(std::ofstream& ofs) const noexcept {
 			if (!ofs.is_open()) throw SetException(CannotReadFile);
 			ofs << n << " " << m << "\n";
@@ -383,7 +370,7 @@ namespace graph_ns {
 		}
 		void read_fstream(std::ifstream& ifs, bool isweight) {
 			if (!ifs.is_open()) throw SetException(CannotReadFile);
-			size_t n_f, m_f;
+			size_t n_f, m_f;// читаем кол-во вершин и ребер
 			ifs >> n_f >> m_f;
 			if (!ifs.good()) throw SetException(IncorrectInputFormat);
 			for (int i = 0; i < n_f; i++) {
@@ -407,6 +394,7 @@ namespace graph_ns {
 				add_edge(from, to, weight, inf);
 			}
 		}
+		//консоль
 		void read_stream(std::istream& ifs, bool isweight) {
 			size_t n_f, m_f;
 			ifs >> n_f >> m_f;
@@ -415,7 +403,7 @@ namespace graph_ns {
 				size_t id;
 				NodeInfo inf;
 				ifs >> id >> inf;
-				ifs.ignore();
+				ifs.ignore();//пропустим символ, чтобы не считывал символ перехода на новую строчку
 				if (!ifs.good()) throw SetException(IncorrectInputFormat);
 				if (inf == "-") inf = NodeInfo();
 				add_node(id, inf);
@@ -439,23 +427,23 @@ namespace graph_ns {
 			if (nodes.find(id) == nodes.end()) {
 				nodes[id] = node(id, inf);
 				n++;
-				incidences_list.emplace(id, std::list<edge>());
+				incidences_list.emplace(id, std::list<edge>());//добавляем новый элемент в матрицу инцидентности, ребер у него еще нет
 			}
 			else throw SetException(NodeExists);
 		}
 		void add_edge(size_t id_from, size_t id_to, WType weight = 1, EdgeInfo inf = EdgeInfo()) {
-			if (nodes.find(id_from) == nodes.end() || nodes.find(id_to) == nodes.end()) throw SetException(NoSuchElement);
-			if (isDirected || edges.find(edge(id_to, id_from, weight, inf)) == edges.end()) {
-				edges.emplace(edge(id_from, id_to, weight, inf));
+			if (nodes.find(id_from) == nodes.end() || nodes.find(id_to) == nodes.end()) throw SetException(NoSuchElement);//ребро должнос соединять уже сущестующие элементы
+			if (isDirected || edges.find(edge(id_to, id_from, weight, inf)) == edges.end()) {//множество ребер
+				edges.emplace(edge(id_from, id_to, weight, inf));//вставим в множество ребер
 				if (weight != 1) weight_edges++;
 			}
-			if (std::find(incidences_list[id_from].begin(), incidences_list[id_from].end(), edge(id_from, id_to, weight, inf)) == incidences_list[id_from].end())
+			if (std::find(  incidences_list[id_from].begin(), incidences_list[id_from].end(), edge(id_from, id_to, weight, inf)  ) == incidences_list[id_from].end())//если не нашел в матрице инцедентности
 			{
-				if (isDirected || (std::find(incidences_list[id_from].begin(), incidences_list[id_from].end(), edge(id_to, id_from, weight, inf)) == incidences_list[id_from].end()))
+				if (isDirected || (std::find(incidences_list[id_from].begin(), incidences_list[id_from].end(), edge(id_to, id_from, weight, inf)) == incidences_list[id_from].end()) )
 				{
 					m++;
 					incidences_list[id_from].push_back(edge(id_from, id_to, weight, inf));
-					if (!isDirected) {
+					if (!isDirected) {//надо в две стороны сделать, если не ориентированный
 						incidences_list[id_to].push_back(edge(id_to, id_from, weight, inf));
 					}
 				}
@@ -463,10 +451,10 @@ namespace graph_ns {
 		}
 		void remove_node(size_t id) {
 			if (nodes.find(id) == nodes.end()) throw SetException(NoSuchElement);
-			for (typename std::set<edge>::iterator it = edges.begin(); it != edges.end(); ) {
+			for (typename std::set<edge>::iterator it = edges.begin(); it != edges.end(); ) {//надо будет убрать все ребра
 				if ((*it).get_to() == id) {
 					typename std::set<edge>::iterator it_cur = it;
-					it++;
+					it++;//плюс, так как потеряется итератор же при удалении, потому я копирую его в it_cur и увлеичиваю на 1
 					typename std::list<edge>::iterator itx = std::find(incidences_list[(*it_cur).get_from()].begin(), incidences_list[(*it_cur).get_from()].end(), *it_cur);
 					if (itx != incidences_list[(*it_cur).get_from()].end())
 						incidences_list[(*it_cur).get_from()].erase(itx);
@@ -496,16 +484,16 @@ namespace graph_ns {
 				}
 				else it++;
 			}
-			incidences_list.erase(id);
+			incidences_list.erase(id);//удалить этот столбец
 			n--;
-			nodes.erase(id);
+			nodes.erase(id);//убрать эту фигню
 		}
 		void remove_edge(size_t id_from, size_t id_to, std::optional<WType> weight = std::optional<WType>()) {
 			size_t prev_m = m;
 			for (typename std::list<edge>::iterator it = incidences_list[id_from].begin(); it != incidences_list[id_from].end();) {
-				if ((*it).get_from() == id_from && (*it).get_to() == id_to && (!weight.has_value() || (*it).get_weight() == weight.value())) {
+				if ((*it).get_from() == id_from && (*it).get_to() == id_to && (!weight.has_value() || (*it).get_weight() == weight.value())) {//удаляем
 					typename std::list<edge>::iterator it_cur = it;
-					it++;
+					it++;//увелим до того как он станет невалдиным при удалении
 					typename std::set<edge>::iterator itx = std::find(edges.begin(), edges.end(), *it_cur);
 					if (itx != edges.end()) {
 						edges.erase(itx);
@@ -516,8 +504,8 @@ namespace graph_ns {
 				}
 				else it++;
 			}
-			if (prev_m == m) throw SetException(NoSuchEdge);
-			if (!isDirected) {
+			if (prev_m == m) throw SetException(NoSuchEdge);//а если удаление не сработыло, то есть кол-во ребер осталось, тогда ошибочка
+			if (!isDirected) {//но нужно и удалить обратный к нему в матрице инцедентности, при неориентированном
 				for (typename std::list<edge>::iterator it = incidences_list[id_to].begin(); it != incidences_list[id_to].end();) {
 					if ((*it).get_from() == id_to && (*it).get_to() == id_from && (!weight.has_value() || (*it).get_weight() == weight.value())) {
 						typename std::list<edge>::iterator it_cur = it;
@@ -533,70 +521,91 @@ namespace graph_ns {
 		}
 		std::ostream& print(std::ostream& os) const noexcept {
 			for (typename std::unordered_map<size_t, std::list<edge>>::const_iterator it = incidences_list.cbegin(); it != incidences_list.cend(); it++) {
-				os << (*it).first << " - ";
+				os << (*it).first << " - ";//сначала напечает номер вершины
 				for (typename std::list<edge>::const_iterator itl = (*it).second.cbegin(); itl != (*it).second.cend(); itl++) {
-					os << "< " << (*itl).get_from() << ", " << (*itl).get_to() << ", " << (*itl).get_weight() << " >";
-					if (std::distance(itl, (*it).second.cend()) > 1) os << ", ";
+					os << "<from: " << (*itl).get_from() << ", to: " << (*itl).get_to() << ", weight: " << (*itl).get_weight() << " >";
+					if (std::distance(itl, (*it).second.cend()) > 1) os << ", ";//то есть если еще не кончился список ребер, тогда он еще продолжит, умно сделал(до этого я реалиховывал как печатаешь первый потому запятая слова или флаг и рекурсивный по ссылке)
 				}
-				if ((*it).second.size() == 0) {
+				if ((*it).second.size() == 0) {//если по такому номеру в словаре не нашлось 
 					os << "<>";
 				}
 				os << "\n\n";
 			}
 			return os;
 		}
-		std::ostream& print_edges(std::ostream& os) const noexcept {
+		std::ostream& print_edges(std::ostream& os) const noexcept {//напечатать ребра
 			os << "\n";
 			for (typename std::set<edge>::const_iterator it = edges.cbegin(); it != edges.cend(); it++) {
-				os << "< " << (*it).get_from() << " - " << (*it).get_to() << " [" << (*it).get_weight() << "] >";
+				os << "<from - to: " << (*it).get_from() << " - " << (*it).get_to() << " weight: [" << (*it).get_weight() << "] >";
 				os << "\n";
 			}
 			return os;
 		}
 		~graph() = default;
 
+		bool operator==(const graph<WType, isDirected, NodeInfo, EdgeInfo>& other) const {
+			for (typename std::set<edge>::iterator it = edges.begin(); it != edges.end(); it++) {
+				edge r_ed((*it).get_to(), (*it).get_from(), (*it).get_weight(), (*it).get_info());
+				if (other.edges.find(*it) == other.edges.end() && other.edges.find(r_ed) == other.edges.end()) return false;
+			}
+			for (typename std::unordered_map<size_t, node>::const_iterator it = nodes.cbegin(); it != nodes.cend(); it++) {
+				if (other.nodes.find((*it).first) == other.nodes.cend()) return false;
+			}
+			return this->n == other.n && this->m == other.m;
+		}
+		bool operator!=(const graph<WType, isDirected, NodeInfo, EdgeInfo>& other) const {
+			for (typename std::set<edge>::iterator it = edges.begin(); it != edges.end(); it++) {
+				edge r_ed((*it).get_to(), (*it).get_from(), (*it).get_weight(), (*it).get_info());
+				if (other.edges.find(*it) == other.edges.end() && other.edges.find(r_ed) == other.edges.end()) return true;
+			}
+			for (typename std::unordered_map<size_t, node>::const_iterator it = nodes.cbegin(); it != nodes.cend(); it++) {
+				if (other.nodes.find((*it).first) == other.nodes.cend()) return true;
+			}
+			return !(this->n == other.n && this->m == other.m);
+		}
 private:
 	struct greater_pair {//создано только для деикстры
 		bool operator()(const std::pair<size_t, WType>& first, const std::pair<size_t, WType>& second) const noexcept {
 			//Указывает на обязательность использования результата при возврате из функции.
-			if (first.second != second.second) {
+			if (first.second != second.second) {//сначала сортировать должен по весу, если веса одинаковые, тогда просто кто ближе
 				return first.second > second.second;
 			}
 			return first.first > second.first;
 		}
 	};
 
-	path find_min_dist_dijkstra(size_t id_f, size_t id_t) {//для крутых взвешанных
-		std::unordered_map<size_t, std::optional<WType>> dist;
-		std::unordered_map<size_t, const edge*> parents;
+	path find_min_dist_dijkstra(size_t id_f, size_t id_t) {//для крутых взвешанных и ориентированных, вершина откуда и куда
+		std::unordered_map<size_t, std::optional<WType>> dist;//словарь: номер - есть вес или нет
+		std::unordered_map<size_t, const edge*> parents;//словарь: номер - ссылка на элемент
 		parents.reserve(n);
 		dist.reserve(n);
 		dist[id_f] = WType();
-		std::priority_queue<std::pair<size_t, WType>, std::vector<std::pair<size_t, WType>>, greater_pair> pq;
-		pq.push(std::make_pair(id_f, 0));
+		//сначала что лежит, потом тип контейнера, который будет лежать в основе нашей очереди(прикольно что если выполнить priority_queue.Get_container() - возвращает оригинальный контейнер)
+		std::priority_queue<std::pair<size_t, WType>, std::vector<std::pair<size_t, WType>>, greater_pair> pq;//создаем приоритетную очередь, из вершины и вектора вершин с которым он соединяется
+		pq.push(std::make_pair(id_f, 0));//добавляем первый и ставим первому значение 0
 		while (pq.size()) {
 			int v = pq.top().first;
 			pq.pop();
-			if (nodes[v].get_color() != 0) continue;
-			if (!dist[v].has_value()) break;
-			nodes[v].set_color(1);
-			for (typename std::list<edge>::iterator it = incidences_list[v].begin(); it != incidences_list[v].end(); it++) {
+			if (nodes[v].get_color() != 0) continue;//то есть если обошли, то прощай 
+			if (!dist[v].has_value()) break;//если уже лежит расстояние то тоже бросай
+			nodes[v].set_color(1);//пусть зачтет что мы просмотрели его
+			for (typename std::list<edge>::iterator it = incidences_list[v].begin(); it != incidences_list[v].end(); it++) {//для всех элементов, с которыми связаны
 				WType len = (*it).get_weight();
 				size_t id_to = (*it).get_to();
-				if ((!dist[id_to].has_value()) || dist[id_to].value() > dist[v].value() + len) {
-					dist[id_to] = dist[v].value() + len;
-					parents[id_to] = &(*it);
-					pq.push(std::make_pair(id_to, dist[id_to].value()));
+				if ((!dist[id_to].has_value()) || dist[id_to].value() > dist[v].value() + len) {//по факту мы просто пробегаемся по всем здесь и алгос минимальной длины
+					dist[id_to] = dist[v].value() + len;//предыдущее+ нынешнее
+					parents[id_to] = &(*it);//в отцы элемента, которого только что рассмотрели нужно положить тот от которого пришли
+					pq.push(std::make_pair(id_to, dist[id_to].value()));//ну и положили в очередь ребенка, чтобы уже внучат рассмотреть
 				}
 			}
 		}
 		for (typename std::unordered_map<size_t, node>::iterator it = nodes.begin(); it != nodes.end(); it++) {
-			(*it).second.set_color(0);
+			(*it).second.set_color(0);//все обратно в блек
 		}
 		if (!dist[id_t].has_value()) throw SetException(GraphNotConnective);
 		path res;
 		for (size_t cur_id = id_t; cur_id != id_f; cur_id = parents[cur_id]->get_from()) {
-			res.push_tobegin(*parents[cur_id]);
+			res.push_tobegin(*parents[cur_id]);//и создаем цепочку от последнего к отцам и записываем так задом наперед
 		}
 		return res;
 	}
@@ -609,11 +618,11 @@ private:
 		std::queue<size_t> id_queue;//создаем очередь
 		id_queue.push(id_f);//кладем туда первый
 		nodes[id_f].set_color(1);//если мы прошли, то расскрасим красным
-		for (; id_queue.size();) {
+		for (; id_queue.size();) {//пока выполняется, встретиться иначе - ошибка, короче while (id_queue.size())
 			int v = id_queue.front();//первый элемент в очереди вытаскиваем и сохраняем
 			id_queue.pop();
 			if (v == id_t) break;//а если дошли, то че дальше искать
-			if (!dist[v].has_value()) break;//если расстояние до него не существует, тогда выкидывает, то есть первоначальный мы положили уже
+			if (!dist[v].has_value()) break;//если расстояние до него существует, тогда к черту
 
 			for (typename std::list<edge>::const_iterator it = incidences_list[v].cbegin(); it != incidences_list[v].cend(); it++) {
 				size_t id_to = (*it).get_to();
@@ -643,16 +652,25 @@ private:
 	}
 	};
 
+
+
+
+
+
+
+
+
 	template<typename WType = int, class NodeInfo = std::string, class EdgeInfo = std::string>
-	class directed_graph : public graph<WType, true, NodeInfo, EdgeInfo>
+	class directed_graph : public graph<WType, true, NodeInfo, EdgeInfo>//ориентированный граф
 	{
 	public:
 		using node = node<NodeInfo>;
 		using edge = edge<EdgeInfo, WType>;
 		using path = path<EdgeInfo, WType>;
-	private:
 		using base = graph<WType, true, NodeInfo, EdgeInfo>;
 
+
+	private:
 		void csc_order(size_t id, std::vector<size_t>& order) {
 			base::nodes[id].set_color(1);
 			for (typename std::list<edge>::iterator it = base::incidences_list[id].begin(); it != base::incidences_list[id].end(); it++) {
@@ -677,15 +695,16 @@ private:
 			}
 		}
 	public:
-		std::vector<directed_graph<WType, NodeInfo, EdgeInfo>> connect_components() {
+		//тут создается вектор компонент связности, то есть вектор конденсации
+		std::vector<directed_graph<WType, NodeInfo, EdgeInfo>> connect_components() {//Компонентой сильной связности (strongly connected component) называется такое (максимальное по включению) подмножество вершин C, что любые две вершины этого подмножества достижимы друг из друга,
 			std::vector<directed_graph<WType, NodeInfo, EdgeInfo>> res;
 			std::vector<size_t> order;
 			for (typename std::unordered_map<size_t, node>::iterator it = base::nodes.begin(); it != base::nodes.end(); it++) {
 				if ((*it).second.get_color() == 0)
-					csc_order((*it).first, order);
+					csc_order((*it).first, order);//записали все до которых можно дойти
 			}
 			for (typename std::unordered_map<size_t, node>::iterator it = base::nodes.begin(); it != base::nodes.end(); it++) {
-				(*it).second.set_color(0);
+				(*it).second.set_color(0);//мы же их перекрашивали, теперь наоборот
 			}
 			directed_graph<WType, NodeInfo, EdgeInfo> trp = get_transponated();
 			for (int i = order.size() - 1; i >= 0; i--) {
@@ -696,8 +715,12 @@ private:
 					res.push_back(cur_gr);
 				}
 			}
+			//если кратк, то я смотрю всех кто входит в эту вершину и всех, кто выходит и пересечение есть компонент связности
 			return res;
 		}
+
+
+
 		void visualize() noexcept {
 			std::ofstream ofs("g.dot");
 			ofs << "digraph T {\n";
@@ -709,11 +732,11 @@ private:
 			}
 			ofs << "}";
 			ofs.close();
-			system("cd C:\\Users\\Артём\\source\\repos\\lab_6\\lab_6");
-			system("dot g.dot -T png -o g.png");
+			system("cd C:\\Users\\vipda\\Desktop\\3rd lab of third semestre\\PORNO THE END\\PORNO THE END");
+			system("dot g.dot -T png -o g.png");//скомпилим, откроем
 			system("g.png");
 		}
-		void visualize(const path& path, size_t color) noexcept {
+		void visualize(const path& path, size_t color) noexcept {//окрасим наш и покажем, а потом перекрасим обратно в черный
 			for (typename std::list<edge>::const_iterator it = path.get_chain().cbegin(); it != path.get_chain().cend(); it++) {
 				if (base::edges.find(*it) != base::edges.end()) {
 					base::edges.erase((*it));
@@ -725,7 +748,9 @@ private:
 				}
 				else throw SetException(NoSuchElement);
 			}
+
 			visualize();
+
 			for (typename std::list<edge>::const_iterator it = path.get_chain().cbegin(); it != path.get_chain().cend(); it++) {
 				if (base::edges.find(*it) != base::edges.end()) {
 					base::edges.erase((*it));
@@ -738,7 +763,7 @@ private:
 			}
 
 		}
-		void visualize(const std::vector<directed_graph<WType>>& vec) noexcept {
+		void visualize(const std::vector<directed_graph<WType>>& vec) noexcept {//это показать вектор графов, к примеру для компонент связности
 			for (size_t color = 1; color <= vec.size(); color++) {
 				for (typename std::unordered_map<size_t, std::list<edge>>::const_iterator it = vec[color-1].incidences_list.cbegin(); it != vec[color - 1].incidences_list.cend(); it++) {
 					if (base::nodes.find((*it).first) != base::nodes.cend()) {
@@ -757,7 +782,9 @@ private:
 					else throw SetException(NoSuchElement);
 				}
 			}
+
 			visualize();
+
 			for (typename std::unordered_map<size_t, node>::iterator it = base::nodes.begin(); it != base::nodes.end(); it++) {
 				(*it).second.set_color(0);
 			}
@@ -790,7 +817,9 @@ private:
 				}
 				else throw SetException(NoSuchElement);
 			}
+
 			visualize();
+
 			for (typename std::unordered_map<size_t, std::list<edge>>::const_iterator it = other.incidences_list.cbegin(); it != other.incidences_list.cend(); it++) {
 				if (base::nodes.find((*it).first) != base::nodes.cend()) {
 					base::nodes[(*it).first].set_color(0);
@@ -806,7 +835,7 @@ private:
 			}
 
 		}
-		void add_graph(const directed_graph<WType, NodeInfo, EdgeInfo>& other) {
+		void add_graph(const directed_graph<WType, NodeInfo, EdgeInfo>& other) {//объединение графов
 			for (typename std::unordered_map<size_t, node>::const_iterator it = other.nodes.cbegin(); it != other.nodes.cend(); it++) {
 				this->add_node((*it).first, (*it).second.get_info());
 			}
@@ -815,15 +844,28 @@ private:
 			}
 		}
 
-		directed_graph<WType, NodeInfo, EdgeInfo> get_transponated() const noexcept {
+		directed_graph<WType, NodeInfo, EdgeInfo> get_transponated() const noexcept {//все ребра в другое направление
 			directed_graph<WType, NodeInfo, EdgeInfo> res;
 			for (auto i : base::nodes) {
 				res.add_node(i.first);
 			}
 			for (auto i : base::edges) {
-				res.add_edge(i.get_to(), i.get_from(), i.get_weight(), i.get_info());
+				res.add_edge(i.get_to(), i.get_from(), i.get_weight(), i.get_info());//ну тут просто поменяли
 			}
 			return res;
+		}
+		bool operator==(const directed_graph<WType, NodeInfo, EdgeInfo>& other) const {
+			for (typename std::unordered_map<size_t, node>::const_iterator it = base::nodes.cbegin(); it != base::nodes.cend(); it++) {
+				if (other.nodes.find((*it).first) == other.nodes.cend()) return false;
+			}
+			return this->n == other.n && this->m == other.m && base::edges == other.edges;
+		}
+		bool operator!=(const directed_graph<WType, NodeInfo, EdgeInfo>& other) const {
+			for (typename std::unordered_map<size_t, node>::const_iterator it = base::nodes.cbegin(); it != base::nodes.cend(); it++) {
+				if (other.nodes.find((*it).first) == other.nodes.cend()) return true;
+			}
+			return !(this->n == other.n && this->m == other.m && base::edges == other.edges);
+
 		}
 	};
 
@@ -890,57 +932,6 @@ private:
 			ofs << "\"];\n";
 		}
 	public:
-		std::vector<undirected_graph<WType, NodeInfo, EdgeInfo>> skeleton() {
-			std::vector<undirected_graph<WType, NodeInfo, EdgeInfo>> ans;
-			size_t cur_bouqet = 1;
-			std::vector<size_t> bouqettes(1);
-			std::vector<undirected_graph<WType, NodeInfo, EdgeInfo>> cc = connect_components();
-			for (typename std::vector<undirected_graph<WType, NodeInfo, EdgeInfo>>::iterator it_cc = cc.begin(); it_cc != cc.end(); it_cc++) {
-				undirected_graph<WType, NodeInfo, EdgeInfo> res;
-				if ((*it_cc).edges.size() == 0) {
-					for (typename std::unordered_map<size_t, node>::const_iterator it_cur_n = (*it_cc).nodes.cbegin(); it_cur_n != (*it_cc).nodes.cend(); it_cur_n++) {
-						res.add_node((*it_cur_n).second.get_id(), (*it_cur_n).second.get_info());
-					}
-					ans.push_back(res);
-					continue;
-				}
-				
-				res.n = (*it_cc).n;
-				res.nodes.emplace((*(*it_cc).edges.cbegin()).get_from(), (*base::nodes.find((*(*it_cc).edges.cbegin()).get_from())).second);
-				for (typename std::set<edge, typename base::less_x>::const_iterator it = (*it_cc).edges.cbegin(); it != (*it_cc).edges.cend(); it++) {
-					typename std::unordered_map<size_t, node>::iterator from = base::nodes.find((*it).get_from());
-					typename std::unordered_map<size_t, node>::iterator to = base::nodes.find((*it).get_to());
-					if ((*to).second.get_color() == 0 && (*from).second.get_color() == 0) {
-						res.nodes[(*it).get_from()] = (*from).second;
-						res.nodes[(*it).get_to()] = (*to).second;
-						base::nodes[(*it).get_to()].set_color(cur_bouqet);
-						base::nodes[(*it).get_from()].set_color(cur_bouqet);
-						bouqettes.push_back(cur_bouqet);
-						cur_bouqet++;
-						res.add_edge((*it).get_from(), (*it).get_to(), (*it).get_weight(), (*it).get_info());
-					}
-					else if (bouqettes[(*to).second.get_color()] != bouqettes[(*from).second.get_color()]) {
-						if ((*to).second.get_color() == 0) {
-							res.nodes[(*it).get_to()] = (*to).second;
-							base::nodes[(*it).get_to()].set_color((*from).second.get_color());
-						}
-						else if ((*from).second.get_color() == 0) {
-							res.nodes[(*it).get_from()] = (*from).second;
-							base::nodes[(*it).get_from()].set_color((*to).second.get_color());
-						}
-						else {
-							bouqettes[(*from).second.get_color()] = (*to).second.get_color();
-						}
-						res.add_edge((*it).get_from(), (*it).get_to(), (*it).get_weight(), (*it).get_info());
-					}
-				}
-				ans.push_back(res);
-			}
-			for (typename std::unordered_map<size_t, node>::iterator it = base::nodes.begin(); it != base::nodes.end(); it++) {
-				(*it).second.set_color(0);
-			}
-			return ans;
-		}
 		std::vector<undirected_graph<WType, NodeInfo, EdgeInfo>> connect_components() {
 			std::vector<undirected_graph<WType, NodeInfo, EdgeInfo>> res;
 			for (typename std::unordered_map<size_t, node>::iterator it = base::nodes.begin(); it != base::nodes.end(); it++) {
@@ -968,7 +959,7 @@ private:
 			}
 			ofs << "}";
 			ofs.close();
-			system("cd C:\\Users\\Артём\\source\\repos\\lab_6\\lab_6");
+			system("cd C:\\Users\\vipda\\Desktop\\3rd lab of third semestre\\PORNO THE END\\PORNO THE END");
 			system("dot g.dot -T png -o g.png");
 			system("g.png");
 		}
@@ -1107,6 +1098,13 @@ private:
 			for (typename std::set<edge>::const_iterator it = other.edges.cbegin(); it != other.edges.cend(); it++) {
 				this->add_edge((*it).get_from(), (*it).get_to(), (*it).get_weight(), (*it).get_info());
 			}
+		}
+		bool operator==(const undirected_graph<WType, NodeInfo, EdgeInfo>& other) const {
+
+			return base::operator==(other);
+		}
+		bool operator!=(const undirected_graph<WType, NodeInfo, EdgeInfo>& other) const {
+			return base::operator!=(other);
 		}
 	};
 }

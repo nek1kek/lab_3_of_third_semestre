@@ -19,7 +19,7 @@ void common_cmd(const string& cmd, graph<double, isDirected>* gr) {
 		cin.ignore();
 		if (!cin.good()) throw SetException(IncorrectInputFormat);
 		gr->add_edge(id_from, id_to, w, inf == "-" ? "" : inf);
-	} 
+	}
 	else if (cmd_type == "add_node") {
 		cout << "Введите вершину в формате: \n<id> <Info (\"-\" if no info)>\n";
 		size_t id;
@@ -28,7 +28,7 @@ void common_cmd(const string& cmd, graph<double, isDirected>* gr) {
 		cin.ignore();
 		if (!cin.good()) throw SetException(IncorrectInputFormat);
 		gr->add_node(id, inf == "-" ? "" : inf);
-	} 
+	}
 	else if (cmd_type == "remove_edge") {
 		cout << "Введите ребро в формате: \n<id_from> <id_to> <weight (* если нужно удалить все ребра ведущие из id_from в id_to)>\n";
 		size_t id_from;
@@ -51,7 +51,7 @@ void common_cmd(const string& cmd, graph<double, isDirected>* gr) {
 			}
 			gr->remove_edge(id_from, id_to, w);
 		}
-	} 
+	}
 	else if (cmd_type == "remove_node") {
 		cout << "Введите вершину в формате: \n<id>\n";
 		size_t id;
@@ -59,7 +59,7 @@ void common_cmd(const string& cmd, graph<double, isDirected>* gr) {
 		cin.ignore();
 		if (!cin.good()) throw SetException(IncorrectInputFormat);
 		gr->remove_node(id);
-	} 
+	}
 	else if (cmd_type == "writefile") {
 		vector<Argument<string>>* argList = _MakeArgumentList<string>(cmd, false);
 		string filepath = "";
@@ -107,6 +107,17 @@ void common_cmd(const string& cmd, graph<double, isDirected>* gr) {
 	else throw SetException(UnknownCommand);
 }
 
+void help() {
+	cout << "\n";
+	cout << "\tСписок команд: \n\n\t[] - обязательные аргументы, {} - опциональные аргументы\n\n\t=======================================\n\n\tcreate {-d (орграф)} {-f <путь> (чтение из файла)} {-s (невзвешенный граф)} - создать граф\n\tprint - вывести граф\n\tmid_dist [-f <id from>] [-t <id to>] - кратчайший путь\n\tadd - объединить графы";
+	cout << "\n\tvisualize - визуализировать граф";
+	cout << "\n\tadd_node, add_edge - добавить элемент в граф";
+	cout << "\n\tremove_node, remove_edge - удалить элемент из графа";
+	cout << "\n\transponate - транспонировать (для орграфа)";
+	cout << "\n\tconnect - компоненты (сильной для орграфа) связности";
+	cout << "\n\t======================================= \n\n";
+}
+
 string undirected_graph_menu(undirected_graph<double>* gr) {
 	string cmd;
 	cout << "\n[System] Enter command:\n>> ";
@@ -122,13 +133,8 @@ string undirected_graph_menu(undirected_graph<double>* gr) {
 				}
 				gr->visualize(scc);
 			}
-			else if (cmd_type == "skeleton") {
-				vector<undirected_graph<double>> scc = gr->skeleton();
-				for (auto i : scc) {
-					i.print(cout);
-					cout << "\n===================\n";
-				}
-				gr->visualize(scc);
+			else if (cmd_type == "help") {
+				help();
 			}
 			else if (cmd_type == "visualize") {
 				gr->visualize();
@@ -200,6 +206,9 @@ string directed_graph_menu(directed_graph<double>* gr) {
 				cout << "\n[System] Succsessfully transponated\n";
 
 			}
+			else if (cmd_type == "help") {
+				help();
+			}
 			else if (cmd_type == "add") {
 				vector<Argument<string>>* argList = _MakeArgumentList<string>(cmd, false);
 				bool isWeight = true;
@@ -249,6 +258,7 @@ string directed_graph_menu(directed_graph<double>* gr) {
 	return cmd;
 }
 
+
 void main_listener() {
 	string cmd;
 	cout << "\n[System] Enter command:\n>> ";
@@ -280,7 +290,7 @@ void main_listener() {
 						gr->read_fstream(ifs, isWeight);
 					}
 					else {
-						cout << "Введите граф в формате: \n\n<Кол-во вершин> <Кол-во рёбер>\n<Описание вершины 1>\n...\n<Описание вершины n>\n<Описание ребра 1>\n...\n<Описание ребра m>\n\n";
+						cout << "Введите граф в формате: \n\n<Кол-во вершин> *пробел* <Кол-во рёбер>\n<Описание вершины 1(название-id в системе и описание ее или -)>\n...\n<Описание вершины n>\n<Описание ребра 1(откуда, куда, вес, описание или -)>\n...\n<Описание ребра m>\n\n";
 						gr->read_stream(cin, isWeight);
 					}
 					cmd = directed_graph_menu(gr);
@@ -292,29 +302,17 @@ void main_listener() {
 						gr->read_fstream(ifs, isWeight);
 					}
 					else {
-						cout << "Введите граф в формате: \n\n<Кол-во вершин> <Кол-во рёбер>\n<Описание вершины 1>\n...\n<Описание вершины n>\n<Описание ребра 1>\n...\n<Описание ребра m>\n\n";
+						cout << "Введите граф в формате: \n\n<Кол-во вершин> *пробел* <Кол-во рёбер>\n<Описание вершины 1(название-id в системе и описание ее или -)>\n...\n<Описание вершины n>\n<Описание ребра 1(откуда, куда, вес, описание или -)>\n...\n<Описание ребра m>\n\n";
 						gr->read_stream(cin, isWeight);
 					}
 					cmd = undirected_graph_menu(gr);
 				}
 				cmd_type = _GetCommand(cmd);
 			}
-			if (cmd_type == "help") {
-				cout << "\n";
-				cout << "\tСписок команд: \n\n\t[] - обязательные аргументы, {} - опциональные аргументы\n";
-				cout << "\n\t======================================= \n\n";
-				cout << "\tcreate{-t тип(int,double)} {-e создать пустую матрицу } {-r заполнить рандомными числами} - создать матрицу\n";
-				cout << "\tset[-i на что заменить] - заменить элемент матрицы\n";
-				cout << "\tprint - вывести матрицу\n";
-				cout << "\tadd_col - добавить столбец в матрицу\n";
-				cout << "\tremove_col[-n номер] - удалить столбец из матрицы(начиная с 0)\n";
-				cout << "\tadd_row - добавить строку в матрицу\n";
-				cout << "\tremove_row[-n номер] - удалить строку из матрицы(начиная с 0)\n\n";
-				cout << "\t====================================== = \n\n";
-
-				cout << "\n[System] Enter command:\n>> ";
-				getline(cin, cmd);
-				cmd_type = _GetCommand(cmd);
+			else if (cmd_type == "help") {
+				help();
+				main_listener();
+				return;
 			}
 			else throw SetException(UnknownCommand);
 		}
@@ -322,6 +320,7 @@ void main_listener() {
 	catch (SetException e) {
 		cout << e.message();
 		main_listener();
+		return;
 	}
 	return;
 }

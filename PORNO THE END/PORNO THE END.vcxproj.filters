@@ -27,6 +27,9 @@
     <ClInclude Include="menu.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="tests.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="g.dot">
@@ -37,5 +40,25 @@
     <ClCompile Include="Source.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="tests.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="preset_bipartite.txt">
+      <Filter>Исходные файлы</Filter>
+    </Text>
+    <Text Include="preset_cycle.txt">
+      <Filter>Исходные файлы</Filter>
+    </Text>
+    <Text Include="preset_unconnective.txt">
+      <Filter>Исходные файлы</Filter>
+    </Text>
+    <Text Include="preset1.txt">
+      <Filter>Исходные файлы</Filter>
+    </Text>
+    <Text Include="preset2.txt">
+      <Filter>Исходные файлы</Filter>
+    </Text>
   </ItemGroup>
 </Project>

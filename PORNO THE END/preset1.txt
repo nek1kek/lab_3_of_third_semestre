@@ -1,0 +1,31 @@
+10 20
+1 NoneInfo
+2 NoneInfo
+3 NoneInfo
+4 NoneInfo
+5 NoneInfo
+6 NoneInfo
+7 NoneInfo
+8 NoneInfo
+9 NoneInfo
+10 NoneInfo
+1 2 3 NoneInfo
+1 5 4 NoneInfo
+1 8 1 NoneInfo
+2 7 5 NoneInfo
+2 4 5 NoneInfo
+2 9 3 NoneInfo
+5 7 7 NoneInfo
+5 9 9 NoneInfo
+3 7 10 NoneInfo
+5 10 11 NoneInfo
+4 3 6 NoneInfo
+7 1 7 NoneInfo
+8 7 6 NoneInfo
+8 9 4 NoneInfo
+9 5 10 NoneInfo
+9 3 3 NoneInfo
+10 3 1 NoneInfo
+10 8 2 NoneInfo
+6 5 8 NoneInfo
+5 6 6 NoneInfo

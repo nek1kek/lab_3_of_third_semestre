@@ -1,0 +1,24 @@
+10 13
+1 NoneInfo
+2 NoneInfo
+3 NoneInfo
+4 NoneInfo
+5 NoneInfo
+6 NoneInfo
+7 NoneInfo
+8 NoneInfo
+9 NoneInfo
+10 NoneInfo
+1 5 1 NoneInfo
+1 8 3 NoneInfo
+1 9 4 NoneInfo
+1 10 3 NoneInfo
+2 5 8 NoneInfo
+2 7 6 NoneInfo
+2 8 7 NoneInfo
+3 6 6 NoneInfo
+3 7 5 NoneInfo
+3 10 4 NoneInfo
+4 5 2 NoneInfo
+4 6 1 NoneInfo
+4 9 2 NoneInfo

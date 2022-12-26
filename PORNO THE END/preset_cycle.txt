@@ -1,0 +1,20 @@
+8 11
+1 NoneInfo
+3 NoneInfo
+4 NoneInfo
+5 ConnectPoint
+7 NoneInfo
+8 NoneInfo
+9 NoneInfo
+10 NoneInfo
+1 5 4 NoneInfo
+5 8 1 NoneInfo
+8 4 10 NoneInfo
+4 3 11 NoneInfo
+3 1 7 NoneInfo
+5 7 6 NoneInfo
+7 9 4 NoneInfo
+9 10 10 NoneInfo
+10 9 3 NoneInfo
+10 5 1 NoneInfo
+10 7 2 NoneInfo
