@@ -141,39 +141,6 @@ namespace graph_ns {
 	};
 
 
-
-
-
-	/*
-	template<typename T>
-	struct max_value {
-		static T get() noexcept {
-			return INT32_MAX / 3;
-		}
-	};
-	template<>
-	struct max_value<long long> {
-		static long long get() noexcept {
-			return INT64_MAX / 3;
-		}
-	};
-	template<>
-	struct max_value<short int> {
-		static short int get() noexcept {
-			return INT8_MAX / 3;
-		}
-	};
-	template<>
-	struct max_value<double> {
-		static double get() noexcept {
-			return INT64_MAX / 3;
-		}
-	};возможно удалить
-	*/
-
-
-
-
 	template<typename EdgeInfo, typename WType>
 	struct path {//путь, состоящий из ребер только
 	private:
