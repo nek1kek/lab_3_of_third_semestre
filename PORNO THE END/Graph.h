@@ -677,9 +677,10 @@ private:
 				if (base::nodes[(*it).get_to()].get_color() == 0) {
 					csc_order((*it).get_to(), order);
 				}
-			}
+			}//рекурентно просто проходим все элементы до которых можно дойти
 			order.push_back(id);
 		}
+		//вершина нужная, транспонированный граф, всременный граф,clr - cколько осталось свобохных вершин 
 		void connect_components(size_t node_id, directed_graph<WType, NodeInfo, EdgeInfo>& trp, directed_graph<WType, NodeInfo, EdgeInfo>& res, size_t clr) {
 			trp.nodes[node_id].set_color(clr);
 			for (typename std::list<edge>::iterator it = trp.incidences_list[node_id].begin(); it != trp.incidences_list[node_id].end(); it++) {
@@ -697,21 +698,28 @@ private:
 	public:
 		//тут создается вектор компонент связности, то есть вектор конденсации
 		std::vector<directed_graph<WType, NodeInfo, EdgeInfo>> connect_components() {//Компонентой сильной связности (strongly connected component) называется такое (максимальное по включению) подмножество вершин C, что любые две вершины этого подмножества достижимы друг из друга,
-			std::vector<directed_graph<WType, NodeInfo, EdgeInfo>> res;
+			std::vector<directed_graph<WType, NodeInfo, EdgeInfo>> res;//сюда мы запихиваем рез
 			std::vector<size_t> order;
+			//записали все до которых можно дойти от вершины, которую рассматривают
 			for (typename std::unordered_map<size_t, node>::iterator it = base::nodes.begin(); it != base::nodes.end(); it++) {
 				if ((*it).second.get_color() == 0)
-					csc_order((*it).first, order);//записали все до которых можно дойти
+					csc_order((*it).first, order);//записали все до которых можно дойти от вершины, которую рассматривают
 			}
+			//dfs: первые добавляются самые дальние и до самого ребра
 			for (typename std::unordered_map<size_t, node>::iterator it = base::nodes.begin(); it != base::nodes.end(); it++) {
 				(*it).second.set_color(0);//мы же их перекрашивали, теперь наоборот
 			}
+			//транспонируем орграф
 			directed_graph<WType, NodeInfo, EdgeInfo> trp = get_transponated();
+			//идем с конца в начало
 			for (int i = order.size() - 1; i >= 0; i--) {
 				if (trp.nodes[order[i]].get_color() == 0) {
 					directed_graph<WType, NodeInfo, EdgeInfo> cur_gr;
+					//добавляем первончальный
 					cur_gr.add_node(base::nodes[order[i]].get_id(), base::nodes[order[i]].get_info());
+					//строим от него компоненту
 					connect_components(order[i], trp, cur_gr, i);
+					//фигачим в результат
 					res.push_back(cur_gr);
 				}
 			}
@@ -942,9 +950,9 @@ private:
 					connect_components((*it).second.get_id(), new_cc);
 					res.push_back(new_cc);
 				}
-			}
+			}//мы краскрашиваем в красный те вершины, которые посмотрели
 			for (typename std::unordered_map<size_t, node>::iterator it = base::nodes.begin(); it != base::nodes.end(); it++) {
-				(*it).second.set_color(0);
+				(*it).second.set_color(0);//и тут обратно в черный
 			}
 			return res;
 		}
